@@ -1,3 +1,4 @@
+![drawing (1)](https://github.com/user-attachments/assets/65408421-6dd6-499f-bb10-2876c1f916b0)
 # pixal
 A website / app that is Reddits r/place but its singleplayer.
 
