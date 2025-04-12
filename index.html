@@ -11,6 +11,32 @@
     button, input { margin: 5px; padding: 10px; border-radius: 8px; border: none; }
     .toolbar { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
     #colorPicker { width: 50px; height: 50px; padding: 0; }
+
+    /* Export Menu Styles */
+    .overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .menu {
+      background: #333;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .menu button {
+      display: block;
+      margin: 10px auto;
+      width: 200px;
+      font-size: 16px;
+      background: #444;
+      color: #eee;
+      border: 1px solid #555;
+    }
   </style>
 </head>
 <body>
@@ -19,8 +45,18 @@
   <div class="toolbar">
     <input type="color" id="colorPicker" value="#ff0000">
     <button onclick="clearCanvas()">Clear</button>
-    <button onclick="downloadPixal()">Download .pixa</button>
+    <button onclick="openExportMenu()">Export</button>
     <input type="file" id="fileInput" accept=".pixa" onchange="loadPixal(this)">
+  </div>
+
+  <!-- Export Menu Overlay -->
+  <div class="overlay" id="exportOverlay">
+    <div class="menu">
+      <h2>Export Options</h2>
+      <button onclick="downloadPixal()">📦 Export as .pixa (editable)</button>
+      <button onclick="downloadPNG()">🖼️ Export as .png (image)</button>
+      <button onclick="closeExportMenu()">❌ Cancel</button>
+    </div>
   </div>
 
   <script>
@@ -85,6 +121,17 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      closeExportMenu();
+    }
+
+    function downloadPNG() {
+      const link = document.createElement('a');
+      link.download = 'drawing.png';
+      link.href = canvas.toDataURL();
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      closeExportMenu();
     }
 
     function loadPixal(input) {
@@ -107,7 +154,14 @@
       }
     }
 
-    // Initial fill
+    function openExportMenu() {
+      document.getElementById('exportOverlay').style.display = 'flex';
+    }
+
+    function closeExportMenu() {
+      document.getElementById('exportOverlay').style.display = 'none';
+    }
+
     clearCanvas();
   </script>
 </body>
