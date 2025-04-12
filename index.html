@@ -11,7 +11,6 @@
     button, input, select { margin: 5px; padding: 10px; border-radius: 8px; border: none; }
     .toolbar { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
     #colorPicker { width: 50px; height: 50px; padding: 0; }
-    .active { background: #0088ff; color: white; }
     .overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -51,7 +50,6 @@
       <option value="32" selected>32×32</option>
       <option value="64">64×64</option>
     </select>
-    <button id="paintBucketButton" onclick="togglePaintBucket()">🪣 Paint Bucket</button>
   </div>
 
   <!-- Export Menu Overlay -->
@@ -71,7 +69,6 @@
     let pixelSize = canvas.width / size;
     let pixels;
     let drawing = false;
-    let paintBucket = false;
 
     function initializePixels() {
       pixels = Array(size).fill().map(() => Array(size).fill('#000000'));
@@ -102,27 +99,7 @@
     function draw(e) {
       e.preventDefault();
       const { x, y } = getCanvasPos(e);
-      if (paintBucket) {
-        fillArea(x, y, pixels[y][x], document.getElementById('colorPicker').value);
-      } else {
-        drawPixel(x, y, document.getElementById('colorPicker').value);
-      }
-    }
-
-    // Paint bucket flood fill
-    function fillArea(x, y, targetColor, fillColor) {
-      if (targetColor === fillColor) return;
-      const stack = [{x, y}];
-      while (stack.length) {
-        const {x, y} = stack.pop();
-        if (x < 0 || y < 0 || x >= size || y >= size) continue;
-        if (pixels[y][x] !== targetColor) continue;
-        drawPixel(x, y, fillColor);
-        stack.push({x: x+1, y});
-        stack.push({x: x-1, y});
-        stack.push({x, y+1});
-        stack.push({x, y-1});
-      }
+      drawPixel(x, y, document.getElementById('colorPicker').value);
     }
 
     function clearCanvas() {
@@ -190,17 +167,12 @@
       document.getElementById('exportOverlay').style.display = 'none';
     }
 
-    function togglePaintBucket() {
-      paintBucket = !paintBucket;
-      document.getElementById('paintBucketButton').classList.toggle('active', paintBucket);
-    }
-
     canvas.addEventListener('mousedown', e => { drawing = true; draw(e); });
-    canvas.addEventListener('mousemove', e => { if (drawing && !paintBucket) draw(e); });
+    canvas.addEventListener('mousemove', e => { if (drawing) draw(e); });
     canvas.addEventListener('mouseup', () => drawing = false);
     canvas.addEventListener('mouseleave', () => drawing = false);
     canvas.addEventListener('touchstart', e => { drawing = true; draw(e); });
-    canvas.addEventListener('touchmove', e => { if (drawing && !paintBucket) draw(e); });
+    canvas.addEventListener('touchmove', e => { if (drawing) draw(e); });
     canvas.addEventListener('touchend', () => drawing = false);
     canvas.addEventListener('touchcancel', () => drawing = false);
 
