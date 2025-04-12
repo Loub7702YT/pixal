@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixal — Pixel Drawing App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #222; color: #eee; margin: 0; padding: 0; }
+    h1 { margin: 10px; }
+    canvas { border: 1px solid #555; cursor: crosshair; margin: 10px auto; display: block; touch-action: none; }
+    button, input { margin: 5px; padding: 10px; border-radius: 8px; border: none; }
+    .toolbar { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+    #colorPicker { width: 50px; height: 50px; padding: 0; }
+  </style>
+</head>
+<body>
+  <h1>🎨 Pixal</h1>
+  <canvas id="canvas" width="320" height="320"></canvas>
+  <div class="toolbar">
+    <input type="color" id="colorPicker" value="#ff0000">
+    <button onclick="clearCanvas()">Clear</button>
+    <button onclick="downloadPixal()">Download .pixa</button>
+    <input type="file" id="fileInput" accept=".pixa" onchange="loadPixal(this)">
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 32;
+    let pixelSize = canvas.width / size;
+    let pixels = Array(size).fill().map(() => Array(size).fill('#000000'));
+    let drawing = false;
+
+    function drawPixel(x, y, color) {
+      if (x < 0 || y < 0 || x >= size || y >= size) return;
+      ctx.fillStyle = color;
+      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+      pixels[y][x] = color;
+    }
+
+    function getCanvasPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      let clientX, clientY;
+      if (e.touches) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      const x = Math.floor((clientX - rect.left) / pixelSize);
+      const y = Math.floor((clientY - rect.top) / pixelSize);
+      return { x, y };
+    }
+
+    function draw(e) {
+      e.preventDefault();
+      const { x, y } = getCanvasPos(e);
+      drawPixel(x, y, document.getElementById('colorPicker').value);
+    }
+
+    // Mouse events
+    canvas.addEventListener('mousedown', e => { drawing = true; draw(e); });
+    canvas.addEventListener('mousemove', e => { if (drawing) draw(e); });
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseleave', () => drawing = false);
+
+    // Touch events
+    canvas.addEventListener('touchstart', e => { drawing = true; draw(e); });
+    canvas.addEventListener('touchmove', e => { if (drawing) draw(e); });
+    canvas.addEventListener('touchend', () => drawing = false);
+    canvas.addEventListener('touchcancel', () => drawing = false);
+
+    function clearCanvas() {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      pixels = Array(size).fill().map(() => Array(size).fill('#000000'));
+    }
+
+    function downloadPixal() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pixels));
+      const a = document.createElement('a');
+      a.href = dataStr;
+      a.download = "drawing.pixa";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function loadPixal(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        pixels = JSON.parse(e.target.result);
+        renderCanvas();
+      };
+      reader.readAsText(file);
+    }
+
+    function renderCanvas() {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          ctx.fillStyle = pixels[y][x];
+          ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+        }
+      }
+    }
+
+    // Initial fill
+    clearCanvas();
+  </script>
+</body>
+</html>
