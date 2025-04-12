@@ -8,11 +8,10 @@
     body { font-family: sans-serif; text-align: center; background: #222; color: #eee; margin: 0; padding: 0; }
     h1 { margin: 10px; }
     canvas { border: 1px solid #555; cursor: crosshair; margin: 10px auto; display: block; touch-action: none; }
-    button, input { margin: 5px; padding: 10px; border-radius: 8px; border: none; }
+    button, input, select { margin: 5px; padding: 10px; border-radius: 8px; border: none; }
     .toolbar { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
     #colorPicker { width: 50px; height: 50px; padding: 0; }
-
-    /* Export Menu Styles */
+    .active { background: #0088ff; color: white; }
     .overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -31,7 +30,7 @@
     .menu button {
       display: block;
       margin: 10px auto;
-      width: 200px;
+      width: 220px;
       font-size: 16px;
       background: #444;
       color: #eee;
@@ -47,6 +46,12 @@
     <button onclick="clearCanvas()">Clear</button>
     <button onclick="openExportMenu()">Export</button>
     <input type="file" id="fileInput" accept=".pixa" onchange="loadPixal(this)">
+    <select id="gridSize" onchange="changeGridSize()">
+      <option value="16">16×16</option>
+      <option value="32" selected>32×32</option>
+      <option value="64">64×64</option>
+    </select>
+    <button id="paintBucketButton" onclick="togglePaintBucket()">🪣 Paint Bucket</button>
   </div>
 
   <!-- Export Menu Overlay -->
@@ -62,10 +67,15 @@
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const size = 32;
+    let size = 32;
     let pixelSize = canvas.width / size;
-    let pixels = Array(size).fill().map(() => Array(size).fill('#000000'));
+    let pixels;
     let drawing = false;
+    let paintBucket = false;
+
+    function initializePixels() {
+      pixels = Array(size).fill().map(() => Array(size).fill('#000000'));
+    }
 
     function drawPixel(x, y, color) {
       if (x < 0 || y < 0 || x >= size || y >= size) return;
@@ -92,25 +102,33 @@
     function draw(e) {
       e.preventDefault();
       const { x, y } = getCanvasPos(e);
-      drawPixel(x, y, document.getElementById('colorPicker').value);
+      if (paintBucket) {
+        fillArea(x, y, pixels[y][x], document.getElementById('colorPicker').value);
+      } else {
+        drawPixel(x, y, document.getElementById('colorPicker').value);
+      }
     }
 
-    // Mouse events
-    canvas.addEventListener('mousedown', e => { drawing = true; draw(e); });
-    canvas.addEventListener('mousemove', e => { if (drawing) draw(e); });
-    canvas.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('mouseleave', () => drawing = false);
-
-    // Touch events
-    canvas.addEventListener('touchstart', e => { drawing = true; draw(e); });
-    canvas.addEventListener('touchmove', e => { if (drawing) draw(e); });
-    canvas.addEventListener('touchend', () => drawing = false);
-    canvas.addEventListener('touchcancel', () => drawing = false);
+    // Paint bucket flood fill
+    function fillArea(x, y, targetColor, fillColor) {
+      if (targetColor === fillColor) return;
+      const stack = [{x, y}];
+      while (stack.length) {
+        const {x, y} = stack.pop();
+        if (x < 0 || y < 0 || x >= size || y >= size) continue;
+        if (pixels[y][x] !== targetColor) continue;
+        drawPixel(x, y, fillColor);
+        stack.push({x: x+1, y});
+        stack.push({x: x-1, y});
+        stack.push({x, y+1});
+        stack.push({x, y-1});
+      }
+    }
 
     function clearCanvas() {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      pixels = Array(size).fill().map(() => Array(size).fill('#000000'));
+      initializePixels();
     }
 
     function downloadPixal() {
@@ -140,7 +158,10 @@
       const reader = new FileReader();
       reader.onload = e => {
         pixels = JSON.parse(e.target.result);
+        size = pixels.length;
+        pixelSize = canvas.width / size;
         renderCanvas();
+        document.getElementById('gridSize').value = size;
       };
       reader.readAsText(file);
     }
@@ -154,6 +175,13 @@
       }
     }
 
+    function changeGridSize() {
+      size = parseInt(document.getElementById('gridSize').value);
+      pixelSize = canvas.width / size;
+      initializePixels();
+      renderCanvas();
+    }
+
     function openExportMenu() {
       document.getElementById('exportOverlay').style.display = 'flex';
     }
@@ -162,7 +190,22 @@
       document.getElementById('exportOverlay').style.display = 'none';
     }
 
-    clearCanvas();
+    function togglePaintBucket() {
+      paintBucket = !paintBucket;
+      document.getElementById('paintBucketButton').classList.toggle('active', paintBucket);
+    }
+
+    canvas.addEventListener('mousedown', e => { drawing = true; draw(e); });
+    canvas.addEventListener('mousemove', e => { if (drawing && !paintBucket) draw(e); });
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseleave', () => drawing = false);
+    canvas.addEventListener('touchstart', e => { drawing = true; draw(e); });
+    canvas.addEventListener('touchmove', e => { if (drawing && !paintBucket) draw(e); });
+    canvas.addEventListener('touchend', () => drawing = false);
+    canvas.addEventListener('touchcancel', () => drawing = false);
+
+    initializePixels();
+    renderCanvas();
   </script>
 </body>
 </html>
