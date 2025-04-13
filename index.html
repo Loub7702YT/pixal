@@ -5,23 +5,52 @@
   <title>Pixal — Pixel Drawing App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <link rel="icon" type="image/png" href="favicon.png">
-  <!-- iOS Homescreen support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pixal">
   <link rel="apple-touch-icon" href="favicon.png">
-  <!-- Android -->
   <link rel="manifest" href="manifest.json">
   <style>
-    body { font-family: sans-serif; text-align: center; background: #222; color: #eee; margin: 0; padding: 0; }
-    h1 { margin: 10px; }
-    canvas { border: 1px solid #555; cursor: crosshair; margin: 10px auto; display: block; touch-action: none; }
-    button, input, select { margin: 5px; padding: 10px; border-radius: 8px; border: none; }
-    .toolbar { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
-    #colorPicker { width: 50px; height: 50px; padding: 0; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #222;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      margin: 10px;
+    }
+    canvas {
+      border: 1px solid #555;
+      cursor: crosshair;
+      margin: 10px auto;
+      display: block;
+      touch-action: none;
+    }
+    button, input, select {
+      margin: 5px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+    .toolbar {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+    }
+    #colorPicker {
+      width: 50px;
+      height: 50px;
+      padding: 0;
+    }
     .overlay {
       position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0,0,0,0.7);
       display: none;
       justify-content: center;
@@ -43,15 +72,6 @@
       color: #eee;
       border: 1px solid #555;
     }
-    .fullscreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      margin: 0;
-      z-index: 999;
-    }
   </style>
 </head>
 <body>
@@ -67,10 +87,8 @@
       <option value="32" selected>32×32</option>
       <option value="64">64×64</option>
     </select>
-    <button onclick="toggleFullscreen()">Fullscreen Mode</button>
   </div>
 
-  <!-- Export Menu Overlay -->
   <div class="overlay" id="exportOverlay">
     <div class="menu">
       <h2>Export Options</h2>
@@ -87,8 +105,6 @@
     let pixelSize = canvas.width / size;
     let pixels;
     let drawing = false;
-    let isFullscreen = false;
-    let normalCanvasSize = { width: canvas.width, height: canvas.height };
 
     function initializePixels() {
       pixels = Array(size).fill().map(() => Array(size).fill('#000000'));
@@ -185,28 +201,6 @@
 
     function closeExportMenu() {
       document.getElementById('exportOverlay').style.display = 'none';
-    }
-
-    function toggleFullscreen() {
-      const button = document.querySelector('button[onclick="toggleFullscreen()"]');
-      if (!isFullscreen) {
-        normalCanvasSize = { width: canvas.width, height: canvas.height };
-        canvas.classList.add('fullscreen');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        pixelSize = canvas.width / size;
-        renderCanvas();
-        isFullscreen = true;
-        button.textContent = "Exit Fullscreen";
-      } else {
-        canvas.classList.remove('fullscreen');
-        canvas.width = normalCanvasSize.width;
-        canvas.height = normalCanvasSize.height;
-        pixelSize = canvas.width / size;
-        renderCanvas();
-        isFullscreen = false;
-        button.textContent = "Fullscreen Mode";
-      }
     }
 
     canvas.addEventListener('mousedown', e => { drawing = true; draw(e); });
